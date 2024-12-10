@@ -88,8 +88,9 @@ namespace DefaultNamespace
 
             if (pokemonImageElement != null)
             {
-                string imageUrl = $"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{pokemon.id}.png";
-
+                // string imageUrl = $"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{pokemon.id}.png";
+                string imageUrl = $"https://img.pokemondb.net/artwork/vector/{pokemon.name}.png";
+                
                 Texture2D texture = await FetchTextureAsync(imageUrl);
 
                 if (texture != null)
