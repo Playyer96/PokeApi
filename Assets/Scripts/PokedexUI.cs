@@ -184,6 +184,7 @@ namespace DefaultNamespace
             _pokemonDetailsContainer.visible = true;
 
             VisualElement pokemonDetailUI = pokemonDetailUITemplate?.CloneTree();
+            
 
             Label pokemonNameLabel = pokemonDetailUI.Q<Label>("PokemonName");
             Label pokemonHeightLabel = pokemonDetailUI.Q<Label>("HeightLabel");
@@ -192,8 +193,8 @@ namespace DefaultNamespace
             VisualElement pokemonImageElement = pokemonDetailUI.Q<VisualElement>("Image");
 
             pokemonNameLabel.text = $"ID: {pokemon.id} - {StringUtils.CapitalizeFirstLetter(pokemon.name)}";
-            pokemonHeightLabel.text = $"Height: {pokemon.height}";
-            pokemonWeightLabel.text = $"Weight: {pokemon.weight}";
+            pokemonHeightLabel.text = $"Height: {pokemon.height} m";
+            pokemonWeightLabel.text = $"Weight: {pokemon.weight} kg";
             pokemonTypesLabel.text =
                 $"Types: {string.Join(", ", pokemon.types.Select(t => StringUtils.CapitalizeFirstLetter(t.type.name)))}";
 

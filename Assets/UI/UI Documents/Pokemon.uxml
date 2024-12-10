@@ -2,6 +2,6 @@
     <Style src="project://database/Assets/UI/Style%20Sheets/Pokemon.uss?fileID=7433441132597879392&amp;guid=746eadc88f28d45928d5f973157bf564&amp;type=3#Pokemon" />
     <engine:Button name="PokemonButton" style="width: 200px; height: 200px;">
         <engine:VisualElement name="Image" style="flex-grow: 1; flex-direction: column-reverse; -unity-background-scale-mode: scale-to-fit; background-size: contain;" />
-        <engine:Label text="Label" name="PokemonName" style="-unity-text-align: upper-center;" />
+        <engine:Label text="Label" name="PokemonName" style="-unity-text-align: middle-center; font-size: 14%; height: 14%;" />
     </engine:Button>
 </engine:UXML>

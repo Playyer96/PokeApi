@@ -1,12 +1,12 @@
 <engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <engine:VisualElement style="flex-grow: 1; background-color: rgb(118, 118, 118); position: absolute; width: 100%; height: 100%;">
-        <engine:Label text="Pokedex" style="-unity-text-align: middle-center; font-size: 72px;" />
+        <engine:Label text="Pokedex" style="-unity-text-align: middle-center; font-size: 75%;" />
         <engine:ScrollView name="ScrollView">
-            <engine:VisualElement name="PokemonsHolder" style="flex-grow: 1; flex-direction: row; flex-wrap: wrap;" />
+            <engine:VisualElement name="PokemonsHolder" style="flex-grow: 1; flex-direction: row; flex-wrap: wrap; justify-content: center;" />
         </engine:ScrollView>
     </engine:VisualElement>
-    <engine:VisualElement name="PokemonDetailsContainer" style="flex-grow: 1; position: absolute; width: 100%; height: 100%; visibility: hidden; justify-content: space-around; align-self: auto; align-items: stretch; max-width: 100%; max-height: 100%; align-content: auto;" />
     <engine:VisualElement name="LoadingVisualElement" style="flex-grow: 1; justify-content: center; visibility: hidden;">
-        <engine:Label text="Fetching Data" name="LoadingLabel" style="justify-content: center; -unity-text-align: middle-center; font-size: 72px; align-content: center;" />
+        <engine:Label text="Fetching Data" name="LoadingLabel" style="justify-content: center; -unity-text-align: middle-center; font-size: 34%; align-content: center; white-space: pre-wrap;" />
     </engine:VisualElement>
+    <engine:VisualElement name="PokemonDetailsContainer" style="flex-grow: 1; min-width: 100%; min-height: 100%; visibility: hidden; display: flex; position: absolute; flex-basis: 100%; align-items: center; justify-content: center; align-self: center; align-content: center;" />
 </engine:UXML>
