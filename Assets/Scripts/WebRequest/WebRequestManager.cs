@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using UnityEngine;
 
 namespace PokeApi.WebRequest
 {
@@ -30,5 +31,6 @@ namespace PokeApi.WebRequest
             _webRequestHandler.PostAsync<TRequest, TResponse>(url, request);
 
         public Task<T> DeleteAsync<T>(string url) => _webRequestHandler.DeleteAsync<T>(url);
+        public Task<Texture2D> FetchTextureAsync(string url) => _webRequestHandler.FetchTextureAsync(url);
     }
 }

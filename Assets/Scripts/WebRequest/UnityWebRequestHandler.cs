@@ -90,5 +90,19 @@ namespace PokeApi.WebRequest
 
             return JsonUtility.FromJson<T>(request.downloadHandler.text);
         }
+
+        public async Task<Texture2D> FetchTextureAsync(string url)
+        {
+            using UnityWebRequest request = UnityWebRequestTexture.GetTexture(url);
+            await AwaitRequest(request.SendWebRequest());
+
+            if (request.result != UnityWebRequest.Result.Success)
+            {
+                Debug.LogError($"Failed to fetch texture: {request.error}");
+                return null;
+            }
+
+            return DownloadHandlerTexture.GetContent(request);
+        }
     }
 }

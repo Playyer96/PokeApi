@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Threading;
-using JetBrains.Annotations;
 using PokeApi.WebRequest.JsonData;
 using UnityEngine;
 
@@ -11,8 +10,10 @@ namespace PokeApi.WebRequest.Requests
     public class PokemonService
     {
         private readonly WebRequestManager _webRequestManager;
-        private readonly string PokemonListUrl = $"{WebRequestConstants.BaseURL}/pokemon?limit=151&offset=0"; // Adjusted to limit to the first 151 Pokémon
-        private readonly int MaxDegreeOfParallelism = 10; // Set the degree of parallelism as needed
+        private readonly string _pokemonListUrl = $"{WebRequestConstants.BaseURL}/pokemon?limit=151&offset=0";
+        private readonly string _pokemonUrl = $"{WebRequestConstants.BaseURL}/pokemon/";
+
+        private const int BatchSize = 50;
 
         public PokemonService()
         {
@@ -20,7 +21,11 @@ namespace PokeApi.WebRequest.Requests
             _webRequestManager.AddGlobalHeader("Content-type", "application/json");
         }
 
-        [CanBeNull]
+        public async Task<Pokemon> FetchPokemon(Pokemon pokemon)
+        {
+            return await _webRequestManager.GetAsync<Pokemon>($"{_pokemonUrl}{pokemon.id}");
+        }
+
         public async Task<List<Pokemon>> FetchPokemonListAsync()
         {
             Debug.Log("Fetching Pokémon list...");
@@ -30,7 +35,7 @@ namespace PokeApi.WebRequest.Requests
             try
             {
                 // Fetch the initial list of Pokémon names and URLs
-                var response = await _webRequestManager.GetAsync<PokemonListResponse>(PokemonListUrl);
+                var response = await _webRequestManager.GetAsync<PokemonListResponse>(_pokemonListUrl);
                 if (response == null || response.results == null)
                 {
                     Debug.LogError("Failed to fetch Pokémon list or received invalid response.");
@@ -44,7 +49,7 @@ namespace PokeApi.WebRequest.Requests
                 }
 
                 // Process tasks in batches with a limited degree of parallelism
-                using (SemaphoreSlim semaphore = new SemaphoreSlim(MaxDegreeOfParallelism))
+                using (SemaphoreSlim semaphore = new SemaphoreSlim(BatchSize))
                 {
                     List<Task<Pokemon>> currentBatch = new List<Task<Pokemon>>();
 
@@ -89,6 +94,11 @@ namespace PokeApi.WebRequest.Requests
                 Debug.LogError($"Error fetching Pokémon data from URL {url}: {e.Message}");
                 return null; // Return null or handle error appropriately
             }
+        }
+
+        public async Task<Texture2D> FetchTextureAsync(string url)
+        {
+            return await _webRequestManager.FetchTextureAsync(url);
         }
     }
 }
