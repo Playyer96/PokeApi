@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -10,14 +10,6 @@ namespace PokeApi.WebRequest
     public class UnityWebRequestHandler : IWebRequestHandler
     {
         private readonly Dictionary<string, string> _globalHeaders = new Dictionary<string, string>();
-
-        private async Task AwaitRequest(UnityWebRequestAsyncOperation unityWebRequest)
-        {
-            while (!unityWebRequest.isDone)
-            {
-                await Task.Yield();
-            }
-        }
 
         public void AddDefaultRequestHeaders(string key, string value)
         {
@@ -37,13 +29,13 @@ namespace PokeApi.WebRequest
             return unityWebRequest;
         }
 
-        public async Task<T> GetAsync<T>(string url)
+        public async UniTask<T> GetAsync<T>(string url)
         {
             using UnityWebRequest request = UnityWebRequest.Get(url);
 
             ApplyGlobalHeaders(request);
 
-            await AwaitRequest(request.SendWebRequest());
+            await request.SendWebRequest().ToUniTask();
 
             if (request.result != UnityWebRequest.Result.Success)
             {
@@ -53,7 +45,7 @@ namespace PokeApi.WebRequest
             return JsonUtility.FromJson<T>(request.downloadHandler.text);
         }
 
-        public async Task<TResponse> PostAsync<TRequest, TResponse>(string url, TRequest payload)
+        public async UniTask<TResponse> PostAsync<TRequest, TResponse>(string url, TRequest payload)
         {
             string json = JsonUtility.ToJson(payload);
             byte[] data = Encoding.UTF8.GetBytes(json);
@@ -66,7 +58,7 @@ namespace PokeApi.WebRequest
 
             request.SetRequestHeader("Content-Type", "application/json");
 
-            await AwaitRequest(request.SendWebRequest());
+            await request.SendWebRequest().ToUniTask();
 
             if (request.result != UnityWebRequest.Result.Success)
             {
@@ -76,12 +68,12 @@ namespace PokeApi.WebRequest
             return JsonUtility.FromJson<TResponse>(request.downloadHandler.text);
         }
 
-        public async Task<T> DeleteAsync<T>(string url)
+        public async UniTask<T> DeleteAsync<T>(string url)
         {
             using UnityWebRequest request = UnityWebRequest.Delete(url);
             ApplyGlobalHeaders(request);
 
-            await AwaitRequest(request.SendWebRequest());
+            await request.SendWebRequest().ToUniTask();
 
             if (request.result != UnityWebRequest.Result.Success)
             {
@@ -91,10 +83,10 @@ namespace PokeApi.WebRequest
             return JsonUtility.FromJson<T>(request.downloadHandler.text);
         }
 
-        public async Task<Texture2D> FetchTextureAsync(string url)
+        public async UniTask<Texture2D> FetchTextureAsync(string url)
         {
             using UnityWebRequest request = UnityWebRequestTexture.GetTexture(url);
-            await AwaitRequest(request.SendWebRequest());
+            await request.SendWebRequest().ToUniTask();
 
             if (request.result != UnityWebRequest.Result.Success)
             {

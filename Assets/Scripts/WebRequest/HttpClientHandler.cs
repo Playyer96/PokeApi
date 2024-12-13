@@ -1,6 +1,6 @@
 ﻿using System.Net.Http;
 using System.Text;
-using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
 using UnityEngine;
 
@@ -12,55 +12,63 @@ namespace PokeApi.WebRequest
 
         public void AddDefaultRequestHeaders(string key, string value)
         {
-            if (!Client.DefaultRequestHeaders.Contains(key))
+            // Only add to DefaultRequestHeaders if key is valid (common headers)
+            if (key.ToLower() == "user-agent" || key.ToLower() == "authorization") 
             {
-                Client.DefaultRequestHeaders.Add(key, value);
+                if (!Client.DefaultRequestHeaders.Contains(key))
+                {
+                    Client.DefaultRequestHeaders.Add(key, value);
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"Unsupported header: {key}. Only 'User-Agent' or 'Authorization' headers are allowed.");
             }
         }
 
-        public async Task<T> GetAsync<T>(string url)
+        public async UniTask<T> GetAsync<T>(string url)
         {
-            HttpResponseMessage response = await Client.GetAsync(url);
+            HttpResponseMessage response = await Client.GetAsync(url).AsUniTask();
 
             if (!response.IsSuccessStatusCode)
             {
                 throw new HttpRequestException($"Error :{response.StatusCode}");
             }
 
-            string json = await response.Content.ReadAsStringAsync();
+            string json = await response.Content.ReadAsStringAsync().AsUniTask();
             return JsonConvert.DeserializeObject<T>(json);
         }
 
-        public async Task<TResponse> PostAsync<TRequest, TResponse>(string url, TRequest payload)
+        public async UniTask<TResponse> PostAsync<TRequest, TResponse>(string url, TRequest payload)
         {
             string json = JsonConvert.SerializeObject(payload);
             StringContent content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            HttpResponseMessage response = await Client.PostAsync(url, content);
+            HttpResponseMessage response = await Client.PostAsync(url, content).AsUniTask();
 
             if (!response.IsSuccessStatusCode)
             {
                 throw new HttpRequestException($"Error :{response.StatusCode}");
             }
 
-            string responseJson = await response.Content.ReadAsStringAsync();
+            string responseJson = await response.Content.ReadAsStringAsync().AsUniTask();
             return JsonConvert.DeserializeObject<TResponse>(responseJson);
         }
 
-        public async Task<T> DeleteAsync<T>(string url)
+        public async UniTask<T> DeleteAsync<T>(string url)
         {
-            HttpResponseMessage response = await Client.DeleteAsync(url);
+            HttpResponseMessage response = await Client.DeleteAsync(url).AsUniTask();
 
             if (!response.IsSuccessStatusCode)
             {
                 throw new HttpRequestException($"Error :{response.StatusCode}");
             }
 
-            string json = await response.Content.ReadAsStringAsync();
+            string json = await response.Content.ReadAsStringAsync().AsUniTask();
             return JsonConvert.DeserializeObject<T>(json);
         }
 
-        public async Task<Texture2D> FetchTextureAsync(string url)
+        public async UniTask<Texture2D> FetchTextureAsync(string url)
         {
             try
             {
