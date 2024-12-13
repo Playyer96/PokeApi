@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace PokeApi.WebRequest
@@ -25,12 +25,12 @@ namespace PokeApi.WebRequest
             }
         }
 
-        public Task<T> GetAsync<T>(string url) => _webRequestHandler.GetAsync<T>(url);
+        public UniTask GetAsync<T>(string url) => _webRequestHandler.GetAsync<T>(url).AsUniTask();
 
-        public Task<TResponse> PostAsync<TRequest, TResponse>(string url, TRequest request) =>
-            _webRequestHandler.PostAsync<TRequest, TResponse>(url, request);
+        public UniTask PostAsync<TRequest, TResponse>(string url, TRequest request) =>
+            _webRequestHandler.PostAsync<TRequest, TResponse>(url, request).AsUniTask();
 
-        public Task<T> DeleteAsync<T>(string url) => _webRequestHandler.DeleteAsync<T>(url);
-        public Task<Texture2D> FetchTextureAsync(string url) => _webRequestHandler.FetchTextureAsync(url);
+        public UniTask DeleteAsync<T>(string url) => _webRequestHandler.DeleteAsync<T>(url).AsUniTask();
+        public UniTask FetchTextureAsync(string url) => _webRequestHandler.FetchTextureAsync(url).AsUniTask();
     }
 }
