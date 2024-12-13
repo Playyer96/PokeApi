@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.Threading;
+using Cysharp.Threading.Tasks;
 using PokeApi.WebRequest.JsonData;
 using UnityEngine;
 
@@ -9,62 +9,77 @@ namespace PokeApi.WebRequest.Requests
 {
     public class PokemonService
     {
-        private readonly WebRequestManager _webRequestManager;
+        private readonly IWebRequestHandler _webRequestHandler;
         private readonly string _pokemonListUrl = $"{WebRequestConstants.BaseURL}/pokemon?limit=151&offset=0";
         private readonly string _pokemonUrl = $"{WebRequestConstants.BaseURL}/pokemon/";
 
         private const int BatchSize = 50;
 
-        public PokemonService()
+        public PokemonService(bool useUnityWebRequestHandler = true)
         {
-            _webRequestManager = new WebRequestManager();
-            _webRequestManager.AddGlobalHeader("Content-type", "application/json");
+            _webRequestHandler = useUnityWebRequestHandler ? new UnityWebRequestHandler() : new HttpClientHandler();
+            _webRequestHandler.AddDefaultRequestHeaders("Content-type", "application/json");
         }
 
-        public async Task<Pokemon> FetchPokemon(Pokemon pokemon)
+        public PokemonService(IWebRequestHandler webRequestHandler)
         {
-            return await _webRequestManager.GetAsync<Pokemon>($"{_pokemonUrl}{pokemon.id}");
+            _webRequestHandler = webRequestHandler;
+            _webRequestHandler.AddDefaultRequestHeaders("Content-type", "application/json");
         }
 
-        public async Task<List<Pokemon>> FetchPokemonListAsync()
+        public async UniTask<Pokemon> FetchPokemon(Pokemon pokemon)
+        {
+            // Fetch Pokémon data by ID
+            var result = await _webRequestHandler.GetAsync<Pokemon>($"{_pokemonUrl}{pokemon.id}");
+            if (result == null)
+            {
+                Debug.LogError($"Failed to fetch Pokémon with ID {pokemon.id}");
+            }
+
+            return result;
+        }
+
+        public async UniTask<List<Pokemon>> FetchPokemonListAsync()
         {
             Debug.Log("Fetching Pokémon list...");
             List<Pokemon> pokedex = new List<Pokemon>();
-            List<Task<Pokemon>> fetchTasks = new List<Task<Pokemon>>();
+            List<UniTask<Pokemon>> fetchTasks = new List<UniTask<Pokemon>>();
 
             try
             {
-                // Fetch the initial list of Pokémon names and URLs
-                var response = await _webRequestManager.GetAsync<PokemonListResponse>(_pokemonListUrl);
+                // Fetch the list of Pokémon
+                var response = await _webRequestHandler.GetAsync<PokemonListResponse>(_pokemonListUrl);
                 if (response == null || response.results == null)
                 {
                     Debug.LogError("Failed to fetch Pokémon list or received invalid response.");
                     return null;
                 }
 
-                // Create tasks to fetch the data for each Pokémon
+                // Add tasks to fetch each Pokémon asynchronously
                 foreach (var result in response.results)
                 {
-                    fetchTasks.Add(FetchPokemonAsync(result.url));
+                    fetchTasks.Add(FetchPokemonByUrlAsync(result.url));
                 }
 
-                // Process tasks in batches with a limited degree of parallelism
-                using (SemaphoreSlim semaphore = new SemaphoreSlim(BatchSize))
+                // Batch the requests to avoid overwhelming the server
+                using (var semaphore = new SemaphoreSlim(BatchSize))
                 {
-                    List<Task<Pokemon>> currentBatch = new List<Task<Pokemon>>();
+                    List<UniTask<Pokemon>> currentBatch = new List<UniTask<Pokemon>>();
 
                     foreach (var task in fetchTasks)
                     {
                         await semaphore.WaitAsync();
-                        currentBatch.Add(task);
-
-                        task.ContinueWith(t => semaphore.Release());
+                        currentBatch.Add(task.ContinueWith(pokemon =>
+                        {
+                            semaphore.Release();
+                            return pokemon;
+                        }));
                     }
 
-                    // Wait for all tasks in the batch to complete
-                    var results = await Task.WhenAll(currentBatch);
+                    // Wait for all requests to complete
+                    var results = await UniTask.WhenAll(currentBatch);
 
-                    // Filter out only the first 151 Pokémon (first generation)
+                    // Filter out the valid Pokémon based on their IDs
                     foreach (var pokemon in results)
                     {
                         if (pokemon != null && pokemon.id >= 1 && pokemon.id <= 151)
@@ -83,22 +98,29 @@ namespace PokeApi.WebRequest.Requests
             return pokedex;
         }
 
-        private async Task<Pokemon> FetchPokemonAsync(string url)
+        private async UniTask<Pokemon> FetchPokemonByUrlAsync(string url)
         {
             try
             {
-                return await _webRequestManager.GetAsync<Pokemon>(url);
+                return await _webRequestHandler.GetAsync<Pokemon>(url);
             }
             catch (Exception e)
             {
                 Debug.LogError($"Error fetching Pokémon data from URL {url}: {e.Message}");
-                return null; // Return null or handle error appropriately
+                return null;
             }
         }
 
-        public async Task<Texture2D> FetchTextureAsync(string url)
+        public async UniTask<Texture2D> FetchTextureAsync(string url)
         {
-            return await _webRequestManager.FetchTextureAsync(url);
+            // Fetch texture asynchronously
+            var texture = await _webRequestHandler.FetchTextureAsync(url);
+            if (texture == null)
+            {
+                Debug.LogError($"Failed to fetch texture from URL {url}");
+            }
+
+            return texture;
         }
     }
 }
