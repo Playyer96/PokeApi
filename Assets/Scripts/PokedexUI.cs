@@ -4,14 +4,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UIElements;
-using System.Net.Http;
-using System.Threading;
-using PokeApi;
+using Cysharp.Threading.Tasks;
 using PokeApi.WebRequest;
 using PokeApi.WebRequest.JsonData;
 using PokeApi.WebRequest.Requests;
 
-namespace DefaultNamespace
+namespace PokeApi
 {
     public class PokedexUI : MonoBehaviour
     {
@@ -26,7 +24,7 @@ namespace DefaultNamespace
 
         private Label _loadingLabel;
 
-        private static readonly HttpClient HttpClient = new HttpClient();
+        private bool _isFetchingPokemons;
 
         private void Awake()
         {
@@ -54,7 +52,7 @@ namespace DefaultNamespace
             });
         }
 
-        private async Task LoadPokedexAsync()
+        private async UniTask LoadPokedexAsync()
         {
             Debug.Log("Starting to load Pokémon...");
 
@@ -62,10 +60,10 @@ namespace DefaultNamespace
             _loadingLabel.text = "Fetching Data ...";
             _loadingVisualElement.SetEnabled(true);
             _loadingVisualElement.visible = true;
+            _isFetchingPokemons = true;
 
             // Start the animated loading label in a separate task
-            var cancellationTokenSource = new CancellationTokenSource();
-            var loadingAnimationTask = AnimateLoadingLabel(cancellationTokenSource.Token);
+            var loadingAnimationTask = AnimateLoadingLabel();
 
             List<Pokemon> pokedex = await _pokemonService.FetchPokemonListAsync();
 
@@ -89,7 +87,7 @@ namespace DefaultNamespace
 
                 try
                 {
-                    var batchResults = await Task.WhenAll(tasks);
+                    var batchResults = await UniTask.WhenAll(tasks);
                     orderedPokemons.AddRange(batchResults);
                     Debug.Log(
                         $"Processed batch {i / batchSize + 1} of {Math.Ceiling((double)pokedex.Count / batchSize)}.");
@@ -107,8 +105,9 @@ namespace DefaultNamespace
                 _pokemonsContainer.Add(uiElement);
             }
 
+            _isFetchingPokemons = false;
+
             // Stop the loading animation and hide the label
-            cancellationTokenSource.Cancel();
             await loadingAnimationTask;
 
             _loadingVisualElement.SetEnabled(false);
@@ -116,12 +115,12 @@ namespace DefaultNamespace
             Debug.Log("Finished loading all Pokémon.");
         }
 
-        private async Task AnimateLoadingLabel(CancellationToken cancellationToken)
+        private async UniTask AnimateLoadingLabel()
         {
             string baseText = "Fetching Data";
             int dotCount = 0;
 
-            while (!cancellationToken.IsCancellationRequested)
+            while (_isFetchingPokemons)
             {
                 // Update the loading label with the current dot count
                 _loadingLabel.text = $"{baseText}{new string('.', dotCount)}";
@@ -129,7 +128,7 @@ namespace DefaultNamespace
 
                 try
                 {
-                    await Task.Delay(500, cancellationToken); // Update every 500ms
+                    await UniTask.Delay(500);
                 }
                 catch (TaskCanceledException)
                 {
@@ -139,7 +138,7 @@ namespace DefaultNamespace
             }
         }
 
-        private async Task<(int index, VisualElement uiElement)> FetchPokemonUIAsync(Pokemon pokemon, int index)
+        private async UniTask<(int index, VisualElement uiElement)> FetchPokemonUIAsync(Pokemon pokemon, int index)
         {
             try
             {
@@ -184,7 +183,7 @@ namespace DefaultNamespace
             _pokemonDetailsContainer.visible = true;
 
             VisualElement pokemonDetailUI = pokemonDetailUITemplate?.CloneTree();
-            
+
 
             Label pokemonNameLabel = pokemonDetailUI.Q<Label>("PokemonName");
             Label pokemonHeightLabel = pokemonDetailUI.Q<Label>("HeightLabel");
